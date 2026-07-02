@@ -607,6 +607,37 @@ class GitRepo:
         except (ValueError,) + ANY_GIT_ERROR:
             return None
 
+    def get_current_branch(self):
+        try:
+            return self.repo.active_branch.name
+        except (TypeError,) + ANY_GIT_ERROR:
+            return None
+
+    def create_branch(self, name, checkout=True):
+        """Create (and optionally check out) a branch. Returns the branch name.
+
+        Errors are raised (not swallowed) so callers can report them; git
+        errors here usually mean the branch exists or the name is invalid.
+        """
+        if checkout:
+            self.repo.git.checkout("-B", name)
+        else:
+            self.repo.git.branch(name)
+        return name
+
+    def checkout(self, name):
+        self.repo.git.checkout(name)
+        return name
+
+    def push(self, remote="origin", branch=None, set_upstream=True):
+        """Push a branch to a remote. Returns the push output text."""
+        if branch is None:
+            branch = self.get_current_branch()
+        if not branch:
+            raise ValueError("no branch to push (detached HEAD?)")
+        args = ["-u"] if set_upstream else []
+        return self.repo.git.push(*args, remote, f"{branch}:{branch}")
+
     def get_head_commit_sha(self, short=False):
         commit = self.get_head_commit()
         if not commit:

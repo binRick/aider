@@ -1,0 +1,4 @@
+# GitLab integration extra for aider: pip install 'aider-chat[gitlab]'
+# Kept minimal and unpinned-major so it resolves against the offline wheelhouse.
+# python-gitlab pulls in requests, which aider already depends on.
+python-gitlab>=4,<9

@@ -990,6 +990,25 @@ class Commands:
 
         self.io.tool_output(combined_output)
 
+    def cmd_gitlab_issue(self, args):
+        "Fetch a GitLab issue, make the edit, push a branch and open a draft MR: /gitlab-issue <iid>"
+        from aider import gitlab as gitlab_mod
+
+        args = (args or "").strip()
+        if not args.isdigit():
+            self.io.tool_error("Usage: /gitlab-issue <issue-iid>")
+            return
+        gl_args = getattr(self.coder, "gitlab_args", {})
+        gitlab_mod.run_issue_to_mr(
+            self.coder,
+            int(args),
+            url=gl_args.get("url"),
+            token=gl_args.get("token"),
+            project=gl_args.get("project"),
+            close_keyword=gl_args.get("close_keyword", gitlab_mod.DEFAULT_CLOSE_KEYWORD),
+            target_branch=gl_args.get("target_branch"),
+        )
+
     def cmd_test(self, args):
         "Run a shell command and add the output to the chat on non-zero exit code"
         if not args and self.coder.test_cmd:

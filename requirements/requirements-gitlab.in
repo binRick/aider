@@ -1,0 +1,4 @@
+#
+# GitLab integration extra: pip install 'aider-chat[gitlab]'
+#
+python-gitlab
