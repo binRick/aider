@@ -338,6 +338,10 @@ class Coder:
         file_watcher=None,
         auto_copy_context=False,
         auto_accept_architect=True,
+        agent_max_iterations=20,
+        agent_tool_protocol="auto",
+        agent_allow_shell=False,
+        agent_auto_approve_edits=False,
     ):
         # Fill in a dummy Analytics if needed, but it is never .enable()'d
         self.analytics = analytics if analytics is not None else Analytics()
@@ -352,6 +356,11 @@ class Coder:
 
         self.auto_copy_context = auto_copy_context
         self.auto_accept_architect = auto_accept_architect
+
+        self.agent_max_iterations = agent_max_iterations
+        self.agent_tool_protocol = agent_tool_protocol
+        self.agent_allow_shell = agent_allow_shell
+        self.agent_auto_approve_edits = agent_auto_approve_edits
 
         self.ignore_mentions = ignore_mentions
         if not self.ignore_mentions:

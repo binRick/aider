@@ -664,6 +664,10 @@ def main(argv=None, input=None, output=None, force_git_root=None, return_coder=F
     analytics.event("launched")
 
     if args.gui and not return_coder:
+        if args.edit_format == "agent":
+            io.tool_error("Agent mode is not supported with --gui; run it in the terminal.")
+            analytics.event("exit", reason="Agent mode not supported in GUI")
+            return 1
         if not check_streamlit_install(io):
             analytics.event("exit", reason="Streamlit not installed")
             return
@@ -1004,6 +1008,10 @@ def main(argv=None, input=None, output=None, force_git_root=None, return_coder=F
             auto_copy_context=args.copy_paste,
             auto_accept_architect=args.auto_accept_architect,
             add_gitignore_files=args.add_gitignore_files,
+            agent_max_iterations=args.agent_max_iterations,
+            agent_tool_protocol=args.agent_tool_protocol,
+            agent_allow_shell=args.agent_allow_shell,
+            agent_auto_approve_edits=args.agent_auto_approve_edits,
         )
     except UnknownEditFormat as err:
         io.tool_error(str(err))
@@ -1014,6 +1022,14 @@ def main(argv=None, input=None, output=None, force_git_root=None, return_coder=F
         io.tool_error(str(err))
         analytics.event("exit", reason="ValueError during coder creation")
         return 1
+
+    coder.gitlab_args = dict(
+        url=args.gitlab_url,
+        token=args.gitlab_token,
+        project=args.gitlab_project,
+        close_keyword=args.gitlab_close_keyword,
+        target_branch=args.gitlab_target_branch,
+    )
 
     if return_coder:
         analytics.event("exit", reason="Returning coder object")
@@ -1077,6 +1093,21 @@ def main(argv=None, input=None, output=None, force_git_root=None, return_coder=F
         if repo_map:
             io.tool_output(repo_map)
         analytics.event("exit", reason="Showed repo map")
+        return
+
+    if args.gitlab_issue is not None:
+        from aider import gitlab as gitlab_mod
+
+        gitlab_mod.run_issue_to_mr(
+            coder,
+            args.gitlab_issue,
+            url=args.gitlab_url,
+            token=args.gitlab_token,
+            project=args.gitlab_project,
+            close_keyword=args.gitlab_close_keyword,
+            target_branch=args.gitlab_target_branch,
+        )
+        analytics.event("exit", reason="Completed --gitlab-issue")
         return
 
     if args.apply:

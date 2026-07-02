@@ -182,6 +182,40 @@ def get_parser(default_config_files, git_root):
         help="Enable/disable automatic acceptance of architect changes (default: True)",
     )
     group.add_argument(
+        "--agent",
+        action="store_const",
+        dest="edit_format",
+        const="agent",
+        help="Use agent mode: a multi-turn tool-calling loop for the main chat",
+    )
+    group.add_argument(
+        "--agent-max-iterations",
+        type=int,
+        default=20,
+        help="Maximum tool-loop iterations per agent turn (default: 20)",
+    )
+    group.add_argument(
+        "--agent-tool-protocol",
+        choices=["auto", "native", "text"],
+        default="auto",
+        help=(
+            "How the agent requests tool calls: native API tools, a text protocol for models"
+            " without tool support, or auto-detect (default: auto)"
+        ),
+    )
+    group.add_argument(
+        "--agent-allow-shell",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Allow the agent to run shell commands via the bash tool (default: False)",
+    )
+    group.add_argument(
+        "--agent-auto-approve-edits",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Apply agent file edits without confirmation prompts (default: False)",
+    )
+    group.add_argument(
         "--weak-model",
         metavar="WEAK_MODEL",
         default=None,
@@ -523,6 +557,53 @@ def get_parser(default_config_files, git_root):
         default=False,
         help="Enable/disable watching files for ai coding comments (default: False)",
     )
+
+    ##########
+    group = parser.add_argument_group("GitLab integration")
+    group.add_argument(
+        "--gitlab-url",
+        metavar="GITLAB_URL",
+        default=None,
+        help="GitLab base URL (default: GITLAB_URL env, or derived from the origin remote)",
+    )
+    group.add_argument(
+        "--gitlab-token",
+        metavar="GITLAB_TOKEN",
+        default=None,
+        help=(
+            "GitLab access token (default: GITLAB_TOKEN env, or the token embedded in an"
+            " oauth2 origin remote). Prefer an env var over .aider.conf.yml for secrets."
+        ),
+    )
+    group.add_argument(
+        "--gitlab-project",
+        metavar="GITLAB_PROJECT",
+        default=None,
+        help="GitLab project id or group/project path (default: derived from the origin remote)",
+    )
+    group.add_argument(
+        "--gitlab-close-keyword",
+        metavar="KEYWORD",
+        default="Closes",
+        help="Issue-closing keyword used in the MR description (default: Closes)",
+    )
+    group.add_argument(
+        "--gitlab-target-branch",
+        metavar="BRANCH",
+        default=None,
+        help="Target branch for created merge requests (default: the repo's default branch)",
+    )
+    group.add_argument(
+        "--gitlab-issue",
+        metavar="IID",
+        type=int,
+        default=None,
+        help=(
+            "Fetch this GitLab issue as the task, make the edit, push a branch and open a draft"
+            " MR, then exit"
+        ),
+    )
+
     group = parser.add_argument_group("Fixing and committing")
     group.add_argument(
         "--lint",

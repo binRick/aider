@@ -148,6 +148,9 @@ class ModelSettings:
     remove_reasoning: Optional[str] = None  # Deprecated alias for reasoning_tag
     system_prompt_prefix: Optional[str] = None
     accepts_settings: Optional[list] = None
+    # How agent mode should request tool calls: "native" (API tools),
+    # "text" (prompt-based protocol), or None to auto-detect.
+    tool_protocol: Optional[str] = None
 
 
 # Load model settings from package resource
@@ -982,7 +985,7 @@ class Model(ModelSettings):
 
             os.environ[openai_api_key] = token
 
-    def send_completion(self, messages, functions, stream, temperature=None):
+    def send_completion(self, messages, functions, stream, temperature=None, tools=None, tool_choice=None):
         if os.environ.get("AIDER_SANITY_CHECK_TURNS"):
             sanity_check_messages(messages)
 
@@ -1007,10 +1010,17 @@ class Model(ModelSettings):
             function = functions[0]
             kwargs["tools"] = [dict(type="function", function=function)]
             kwargs["tool_choice"] = {"type": "function", "function": {"name": function["name"]}}
+        elif tools is not None:
+            kwargs["tools"] = tools
+            if tool_choice is not None:
+                kwargs["tool_choice"] = tool_choice
         if self.extra_params:
             kwargs.update(self.extra_params)
         if self.is_ollama() and "num_ctx" not in kwargs:
-            num_ctx = int(self.token_count(messages) * 1.25) + 8192
+            token_estimate = self.token_count(messages)
+            if kwargs.get("tools"):
+                token_estimate += self.token_count(json.dumps(kwargs["tools"]))
+            num_ctx = int(token_estimate * 1.25) + 8192
             kwargs["num_ctx"] = num_ctx
         key = json.dumps(kwargs, sort_keys=True).encode()
 
